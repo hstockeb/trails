@@ -1,0 +1,24 @@
+name: Stacker
+options:
+  createIntermediateGroups: true
+settings:
+  base:
+    PRODUCT_BUNDLE_IDENTIFIER: com.hstockeb.Stacker
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    SWIFT_VERSION: "5.9"
+    GENERATE_INFOPLIST_FILE: YES
+    INFOPLIST_KEY_CFBundleDisplayName: Stacker
+    INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.photography
+    INFOPLIST_KEY_NSHumanReadableCopyright: ""
+targets:
+  Stacker:
+    type: application
+    platform: macOS
+    sources:
+      - path: Stacker/Stacker
+    settings:
+      base:
+        PRODUCT_NAME: Stacker
+    scheme:
+      gatherCoverageData: false
+      testTargets: []
