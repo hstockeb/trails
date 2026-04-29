@@ -26,19 +26,19 @@
 |---|------|--------|
 | 9  | Xcode project setup | ✅ Done | `97994fa` — project.yml, xcodegen, StackerApp.swift, ContentView.swift stub |
 | 10 | IPC types + AppState model | ✅ Done | `d1ed86f` — IPCTypes.swift, AppState.swift |
-| 11 | EngineClient (subprocess + IPC) | ⬜ Pending |
-| 12 | ContentView + FolderPickerView | ⬜ Pending |
-| 13 | FrameListView + range selector | ⬜ Pending |
-| 14 | SettingsPanelView | ⬜ Pending |
-| 15 | PreviewPaneView + StackProgressView | ⬜ Pending |
+| 11 | EngineClient (subprocess + IPC) | ✅ Done | `5d5b3d8` — EngineClient.swift, StackerApp.swift wired |
+| 12 | ContentView + FolderPickerView | ✅ Done | `3016d64` — Views/ directory, all view files |
+| 13 | FrameListView + range selector | ✅ Done | `3016d64` — FrameListView.swift |
+| 14 | SettingsPanelView | ✅ Done | `3016d64` — SettingsPanelView.swift |
+| 15 | PreviewPaneView + StackProgressView | ✅ Done | `3016d64` — PreviewPaneView.swift, StackProgressView.swift |
 
 ## Phase 3 — Integration
 
 | # | Task | Status |
 |---|------|--------|
-| 16 | Dev launch path (env vars + script) | ⬜ Pending |
-| 17 | Full Python test suite pass | ⬜ Pending |
-| 18 | End-to-end smoke test | ⬜ Pending |
+| 16 | Dev launch path (env vars + script) | ✅ Done | `8bb235f` — run_dev.sh |
+| 17 | Full Python test suite pass | ✅ Done | 61 tests passing |
+| 18 | End-to-end smoke test | ⬜ Pending — requires Xcode installed |
 
 ---
 
