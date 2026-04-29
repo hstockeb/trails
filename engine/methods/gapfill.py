@@ -5,10 +5,11 @@ def stack(frame_paths: list[str],
           decode_fn: Callable[[str], np.ndarray],
           bright_threshold: float = 0.05) -> np.ndarray:
     """
-    Two-pass gap fill.
+    Two-pass gap fill. Inputs must be float32 arrays normalized to [0, 1].
     Pass 1 (forward): lighten blend, record last bright value and frame index per pixel.
     Pass 2 (backward): record first bright value from the end per pixel.
-    Fill: pixels that were dark but have a bright anchor on both sides get interpolated.
+    Fill: pixels dark in both passes with bright anchors on both sides get interpolated.
+    A pixel is considered "bright" if any channel exceeds bright_threshold.
     """
     if not frame_paths:
         raise ValueError("frame_paths is empty")
@@ -20,30 +21,33 @@ def stack(frame_paths: list[str],
 
     trail = np.zeros(shape, dtype=np.float32)
     last_bright = np.zeros(shape, dtype=np.float32)
-    last_bright_idx = np.full((h, w, c), -1, dtype=np.int32)
+    last_bright_idx = np.full((h, w), -1, dtype=np.int32)   # per-pixel, not per-channel
 
     # Pass 1: forward lighten + track last bright pixel per position
     for i, path in enumerate(frame_paths):
-        frame = decode_fn(path) if i > 0 else first
-        bright_mask = frame > bright_threshold
+        frame = first if i == 0 else decode_fn(path)
+        bright_mask = np.any(frame > bright_threshold, axis=-1)  # (h, w)
         trail = np.maximum(trail, frame)
-        last_bright = np.where(bright_mask, frame, last_bright)
+        last_bright = np.where(bright_mask[:, :, np.newaxis], frame, last_bright)
         last_bright_idx = np.where(bright_mask, i, last_bright_idx)
 
     # Pass 2: backward — find first bright pixel from the end per position
     first_bright_from_end = np.zeros(shape, dtype=np.float32)
-    first_bright_from_end_idx = np.full((h, w, c), n, dtype=np.int32)
+    first_bright_from_end_idx = np.full((h, w), n, dtype=np.int32)   # per-pixel
 
     for i in range(n - 1, -1, -1):
-        frame = decode_fn(frame_paths[i])
-        bright_mask = frame > bright_threshold
-        first_bright_from_end = np.where(bright_mask, frame, first_bright_from_end)
+        frame = first if i == 0 else decode_fn(frame_paths[i])
+        bright_mask = np.any(frame > bright_threshold, axis=-1)  # (h, w)
+        first_bright_from_end = np.where(bright_mask[:, :, np.newaxis], frame, first_bright_from_end)
         first_bright_from_end_idx = np.where(bright_mask, i, first_bright_from_end_idx)
 
-    # Fill: pixels that are dark in trail but have bright anchors on both sides
-    has_left = last_bright_idx >= 0
-    has_right = first_bright_from_end_idx < n
-    gap_exists = (trail <= bright_threshold) & has_left & has_right & (last_bright_idx < first_bright_from_end_idx)
+    # Fill: pixels dark in trail with bright anchors on both sides
+    has_left = last_bright_idx >= 0                           # (h, w)
+    has_right = first_bright_from_end_idx < n                 # (h, w)
+    trail_is_dark = np.all(trail <= bright_threshold, axis=-1)  # (h, w)
+    gap_exists = trail_is_dark & has_left & has_right & (last_bright_idx < first_bright_from_end_idx)
 
-    filled = np.where(gap_exists, (last_bright + first_bright_from_end) / 2.0, trail)
+    filled = np.where(gap_exists[:, :, np.newaxis],
+                      (last_bright + first_bright_from_end) / 2.0,
+                      trail)
     return filled
