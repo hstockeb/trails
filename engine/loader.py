@@ -10,7 +10,7 @@ SUPPORTED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.tif', '.tiff'} | RAW_EXTENSIO
 def scan_folder(folder: str) -> list[FrameRecord]:
     paths = sorted(
         p for p in Path(folder).iterdir()
-        if p.suffix.lower() in SUPPORTED_EXTENSIONS
+        if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS
     )
     records = []
     for i, path in enumerate(paths):
