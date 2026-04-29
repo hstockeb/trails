@@ -35,6 +35,17 @@ def _compute_total_exposure(job: StackJob) -> float | None:
     return None
 
 
+def _reduce_hot_pixels(frame: np.ndarray, threshold: float = 0.5, radius: int = 1) -> np.ndarray:
+    from PIL import Image, ImageFilter
+
+    size = 2 * radius + 1
+    arr_uint8 = (np.clip(frame, 0.0, 1.0) * 255).astype(np.uint8)
+    img = Image.fromarray(arr_uint8)
+    median = np.array(img.filter(ImageFilter.MedianFilter(size=size)), dtype=np.float32) / 255.0
+    hot = np.any(frame - median > threshold, axis=-1, keepdims=True)
+    return np.where(hot, median, frame)
+
+
 def run_pipeline(job: StackJob) -> Generator[dict, None, None]:
     if job.method == "gapfill":
         yield from _run_gapfill(job)
@@ -43,6 +54,7 @@ def run_pipeline(job: StackJob) -> Generator[dict, None, None]:
     backend = CPUBackend()
     frame_count = len(job.frames)
     accumulator = None
+    preview_interval = max(1, job.options.preview_every_n_frames)
 
     dark = decode_frame(job.dark_frame.path) if job.dark_frame else None
 
@@ -51,6 +63,9 @@ def run_pipeline(job: StackJob) -> Generator[dict, None, None]:
 
         if dark is not None:
             frame = np.clip(frame - dark, 0.0, 1.0)
+
+        if job.options.hot_pixel_reduction:
+            frame = _reduce_hot_pixels(frame)
 
         if accumulator is None:
             accumulator = frame.copy()
@@ -65,7 +80,7 @@ def run_pipeline(job: StackJob) -> Generator[dict, None, None]:
 
         yield {"type": "progress", "payload": {"frame": index + 1, "total": frame_count}}
 
-        if (index + 1) % job.options.preview_every_n_frames == 0 or index == frame_count - 1:
+        if (index + 1) % preview_interval == 0 or index == frame_count - 1:
             preview_path = _write_preview(accumulator)
             yield {"type": "preview", "payload": {"path": preview_path}}
 

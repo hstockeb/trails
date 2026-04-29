@@ -6,7 +6,9 @@ Writes newline-delimited JSON events to stdout.
 All logging goes to stderr.
 """
 
+import os
 import sys
+import threading
 
 import numpy as np
 
@@ -17,7 +19,9 @@ from engine.models import StackJob, StackOptions
 from engine.pipeline import run_pipeline
 
 _pending_result: np.ndarray | None = None
-_pending_result_path: str | None = None
+_cancel_event = threading.Event()
+_stack_lock = threading.Lock()
+_stack_thread: threading.Thread | None = None
 
 
 def handle_scan_folder(payload: dict) -> None:
@@ -31,18 +35,44 @@ def handle_scan_folder(payload: dict) -> None:
 
 def handle_start_stack(payload: dict) -> None:
     global _pending_result
-    global _pending_result_path
+
+    # Clear previous result and cancel any in-progress stack
+    _cancel_event.set()
+    with _stack_lock:
+        _pending_result = None
+        _cancel_event.clear()
 
     try:
         job = StackJob.from_dict(payload)
-        for event in run_pipeline(job):
-            if event["type"] == "done":
-                _pending_result_path = event["payload"].get("tmp_result_path")
-                if _pending_result_path and _pending_result_path.endswith(".npy"):
-                    _pending_result = np.load(_pending_result_path)
-            send_event(event["type"], event["payload"])
     except Exception as exc:
         send_event("error", {"message": str(exc)})
+        return
+
+    def _run() -> None:
+        global _pending_result
+        with _stack_lock:
+            try:
+                for event in run_pipeline(job):
+                    if _cancel_event.is_set():
+                        send_event("cancelled", {})
+                        return
+                    if event["type"] == "done":
+                        tmp_path = event["payload"].get("tmp_result_path")
+                        if tmp_path and tmp_path.endswith(".npy"):
+                            _pending_result = np.load(tmp_path)
+                            try:
+                                os.unlink(tmp_path)
+                            except OSError:
+                                pass
+                        event["payload"].pop("tmp_result_path", None)
+                    send_event(event["type"], event["payload"])
+            except Exception as exc:
+                _pending_result = None
+                send_event("error", {"message": str(exc)})
+
+    global _stack_thread
+    _stack_thread = threading.Thread(target=_run, daemon=True)
+    _stack_thread.start()
 
 
 def handle_export(payload: dict) -> None:
@@ -89,6 +119,7 @@ def main() -> None:
 
         message_type = command.get("type")
         if message_type == "cancel":
+            _cancel_event.set()
             send_event("cancelled", {})
             continue
 
@@ -98,6 +129,9 @@ def main() -> None:
             continue
 
         handler(command.get("payload", {}))
+
+    if _stack_thread and _stack_thread.is_alive():
+        _stack_thread.join()
 
 
 if __name__ == "__main__":

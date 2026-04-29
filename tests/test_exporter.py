@@ -134,3 +134,28 @@ def test_export_applies_resize(tmp_path):
 
     with Image.open(out) as img:
         assert img.size == (50, 50)
+
+
+def test_export_applies_crop(tmp_path):
+    arr = np.full((100, 100, 3), 0.5, dtype=np.float32)
+    out = str(tmp_path / "out.png")
+    export_result(arr, out, output_format="png", crop=(10, 20, 40, 30))
+    from PIL import Image
+
+    with Image.open(out) as img:
+        assert img.size == (40, 30)
+
+
+def test_export_writes_tiff(tmp_path):
+    arr = np.full((50, 50, 3), 0.5, dtype=np.float32)
+    out = str(tmp_path / "out.tif")
+    export_result(arr, out, output_format="tiff")
+    assert Path(out).exists()
+    assert Path(out).stat().st_size > 0
+
+
+def test_export_raises_on_unknown_format(tmp_path):
+    import pytest
+    arr = np.full((50, 50, 3), 0.5, dtype=np.float32)
+    with pytest.raises(ValueError, match="Unknown output format"):
+        export_result(arr, str(tmp_path / "out.xyz"), output_format="xyz")
