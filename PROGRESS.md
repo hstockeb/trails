@@ -24,8 +24,8 @@
 
 | # | Task | Status |
 |---|------|--------|
-| 9  | Xcode project setup | ⬜ Pending |
-| 10 | IPC types + AppState model | ⬜ Pending |
+| 9  | Xcode project setup | ✅ Done | `97994fa` — project.yml, xcodegen, StackerApp.swift, ContentView.swift stub |
+| 10 | IPC types + AppState model | ✅ Done | `d1ed86f` — IPCTypes.swift, AppState.swift |
 | 11 | EngineClient (subprocess + IPC) | ⬜ Pending |
 | 12 | ContentView + FolderPickerView | ⬜ Pending |
 | 13 | FrameListView + range selector | ⬜ Pending |
