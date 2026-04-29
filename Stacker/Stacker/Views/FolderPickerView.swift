@@ -24,10 +24,12 @@ struct FolderPickerView: View {
     private func pickFolder() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
-        panel.canChooseFiles = false
+        panel.canChooseFiles = true          // allow picking a file inside the folder
         panel.allowsMultipleSelection = false
+        panel.message = "Select a folder or any image inside it"
         if panel.runModal() == .OK, let url = panel.url {
-            scanFolder(url.path)
+            let folder = url.hasDirectoryPath ? url : url.deletingLastPathComponent()
+            scanFolder(folder.path)
         }
     }
 
