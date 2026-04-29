@@ -8,6 +8,7 @@ struct SettingsPanelView: View {
     private let formats = ["jpeg", "png", "tiff"]
 
     var body: some View {
+        @Bindable var state = state
         VStack(alignment: .leading, spacing: 10) {
             Picker("Method", selection: $state.method) {
                 ForEach(methods, id: \.self) { Text($0).tag($0) }
