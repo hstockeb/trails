@@ -1,0 +1,6 @@
+numpy>=1.26
+Pillow>=10.0
+rawpy>=0.21
+exifread>=3.0
+piexif>=1.1
+pytest>=8.0
