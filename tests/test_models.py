@@ -23,3 +23,24 @@ def test_stack_result_serialisation():
     d = r.to_dict()
     assert d["frames_processed"] == 120
     assert d["total_exposure_seconds"] == 3600.0
+
+def test_stack_job_roundtrip():
+    frames = [FrameRecord(path="/tmp/IMG_0001.jpg", filename="IMG_0001.jpg",
+                          index=0, width=100, height=100, is_raw=False,
+                          exposure_seconds=30.0)]
+    opts = StackOptions(jpeg_quality=90)
+    job = StackJob(frames=frames, method="lighten", options=opts)
+    d = job.to_dict()
+    restored = StackJob.from_dict(d)
+    assert restored.method == "lighten"
+    assert restored.frames[0].filename == "IMG_0001.jpg"
+    assert restored.options.jpeg_quality == 90
+
+def test_stack_result_roundtrip():
+    r = StackResult(output_path="/tmp/out.jpg", filename="out.jpg",
+                    total_exposure_seconds=3600.0, frames_processed=120)
+    d = r.to_dict()
+    restored = StackResult.from_dict(d)
+    assert restored.frames_processed == 120
+    assert restored.total_exposure_seconds == 3600.0
+    assert restored.output_path == "/tmp/out.jpg"

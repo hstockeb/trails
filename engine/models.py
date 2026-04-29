@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
@@ -82,6 +82,14 @@ class StackJob:
     options: StackOptions
     dark_frame: FrameRecord | None = None
 
+    def to_dict(self) -> dict:
+        return {
+            "frames": [f.to_dict() for f in self.frames],
+            "method": self.method,
+            "options": self.options.to_dict(),
+            "dark_frame": self.dark_frame.to_dict() if self.dark_frame else None,
+        }
+
     @classmethod
     def from_dict(cls, d: dict) -> "StackJob":
         return cls(
@@ -106,3 +114,12 @@ class StackResult:
             "total_exposure_seconds": self.total_exposure_seconds,
             "frames_processed": self.frames_processed,
         }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "StackResult":
+        return cls(
+            output_path=d["output_path"],
+            filename=d["filename"],
+            total_exposure_seconds=d.get("total_exposure_seconds"),
+            frames_processed=d["frames_processed"],
+        )
