@@ -3,7 +3,7 @@
 > Auto-updated by Claude Code after each completed task.
 
 **Plan:** `docs/superpowers/plans/2026-04-29-stacker.md` (18 tasks, 3 phases)
-**Worktree:** `.worktrees/build` · Branch: `feature/build`
+**Branch:** `feature/build` (worktree removed — main repo is now on this branch)
 
 ---
 
@@ -38,7 +38,7 @@
 |---|------|--------|
 | 16 | Dev launch path (env vars + script) | ✅ Done | `8bb235f` — run_dev.sh |
 | 17 | Full Python test suite pass | ✅ Done | 61 tests passing |
-| 18 | End-to-end smoke test | ⬜ Pending — requires Xcode installed |
+| 18 | End-to-end smoke test | 🔄 In progress — Xcode installed, app builds and runs |
 
 ---
 
@@ -59,3 +59,17 @@
     unknown format, cancel, full stack→export pipeline, stale result clearing
 - Tasks 6–8 initially implemented by Codex in ~4 min (git writes blocked by sandbox; committed manually)
 - Permissions: `.claude/settings.local.json` has `defaultMode: bypassPermissions`
+
+## Post-plan fixes (Task 18 integration)
+
+- `SettingsPanelView`: added `@Bindable var state = state` inside `body` — `@Observable` + `@Environment` requires this for `$state` bindings (`2f6a060`)
+- `FolderPickerView`: set `canChooseFiles = true` so Open button is enabled when browsing inside a folder; derives folder from selected file (`dba8eab`)
+- `project.yml` + `xcodeproj`: regenerated after adding all Swift sources; removed duplicate `ContentView.swift` stub (`139ef7d`)
+- `EngineClient`: auto-detects Homebrew python3 (`/opt/homebrew/bin/python3`) when `STACKER_PYTHON` env var not set (`f381131`)
+
+## Resuming Task 18
+
+- App builds (⌘B) and runs (⌘R) ✓
+- Folder picker works — selects folder or any image inside it ✓
+- Python engine tested manually: scans 14 frames (7 JPEG + 7 TIF) from `images/` ✓
+- **Next step**: rebuild in Xcode (⌘B → ⌘R) and verify frame list populates after folder pick, then test Stack → Export flow
