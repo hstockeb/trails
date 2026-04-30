@@ -10,7 +10,10 @@ final class EngineClient: ObservableObject {
     var onEvent: ((String, Any?) -> Void)?
 
     func start() throws {
-        let pythonPath = ProcessInfo.processInfo.environment["STACKER_PYTHON"] ?? "/usr/local/bin/python3"
+        let pythonPath = ProcessInfo.processInfo.environment["STACKER_PYTHON"]
+            ?? ["/opt/homebrew/bin/python3", "/usr/local/bin/python3", "/usr/bin/python3"]
+                .first { FileManager.default.fileExists(atPath: $0) }
+            ?? "/usr/bin/python3"
         let engineDir  = ProcessInfo.processInfo.environment["STACKER_ENGINE_DIR"]
             ?? URL(fileURLWithPath: #file)
                 .deletingLastPathComponent()
